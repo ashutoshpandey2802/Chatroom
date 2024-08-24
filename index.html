@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 400px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            overflow: auto;
+        }
+
+        .chat-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message .message-content {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 70%;
+        }
+
+        .message.user .message-content {
+            background-color: #eee;
+            color: #333;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background-color: #0056b3;
+        }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            margin-right: 200px;
+            position:relative;
+            top:230px;
+        }
+        
+        .loading-indicator span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #007bff;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+        
+        .loading-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-15px);
+            }
+            60% {
+                transform: translateY(-7px);
+            }
+        }
+        
+        
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Chat Room</h2>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be dynamically added here -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type your message..." />
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const inputElement = document.getElementById("messageInput");
+        const buttonElement = document.getElementById("sendButton");
+        const chatContainer = document.getElementById("chatMessages");
+
+        // On Send button Click 
+        buttonElement.addEventListener("click", sendMessage);
+
+        // If Enter key pressed
+        inputElement.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        // Load Chat data
+        function getChatData(message) {
+            return fetch("http://localhost:8000/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "question": message
+                })
+            }).then(e => e.json());
+        }
+
+        // Create a message
+        function createMessage(message, isUser = false) {
+            const messageElement = document.createElement("div");
+
+            if (isUser) {
+                messageElement.classList.add("message", "user");
+            }
+
+            const messageContent = document.createElement("div");
+            messageContent.classList.add("message-content");
+
+            messageContent.textContent = message;
+            messageElement.appendChild(messageContent);
+            chatContainer.appendChild(messageElement);
+        }
+
+        // Show the loading indicator
+function showLoadingIndicator() {
+    loadingIndicator.style.display = "block";
+}
+
+// Hide the loading indicator
+function hideLoadingIndicator() {
+    loadingIndicator.style.display = "none";
+}
+
+        function sendMessage() {
+            const messageText = inputElement.value.trim();
+        
+            if (messageText !== "") {
+                // Add user message
+                createMessage(messageText, true);
+        
+                // Scroll to the bottom of the chat
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                showLoadingIndicator()
+
+        
+                // Call API with the message text
+                getChatData(messageText).then(data => {
+                    // Ensure only the answer string is passed
+                    const response = data.answer.answer; // assuming this is where the answer string is stored
+                    createMessage(response);
+                    inputElement.value = "";
+                    inputElement.focus();
+                    hideLoadingIndicator()
+                    // Scroll to the bottom of the chat
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

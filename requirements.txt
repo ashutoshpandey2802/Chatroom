@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+sqlite3  
+numpy
+pandas
+cohere 
+annoy
+search_index  
+llm_model 
+python-dateutil
